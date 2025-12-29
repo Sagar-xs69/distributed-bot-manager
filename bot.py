@@ -7,7 +7,6 @@ import re
 import threading
 from threading import Lock
 import asyncio
-import subprocess
 import requests
 import uuid
 
@@ -88,6 +87,7 @@ def get_koyeb_app_id():
         )
         if resp.status_code in [200, 201]:
             return resp.json().get("app", {}).get("id")
+        logging.error(f"Failed to create app: {resp.status_code} - {resp.text}")
         return None
     except Exception as e:
         logging.error(f"Error getting app ID: {e}")
@@ -97,13 +97,15 @@ def create_worker_service(app_id, host, port, duration, worker_num):
     """Create a single worker service on Koyeb"""
     service_name = f"worker-{uuid.uuid4().hex[:8]}"
     
+    # Correct Koyeb API payload structure
     payload = {
+        "app_id": app_id,
         "definition": {
             "name": service_name,
             "type": "WORKER",
             "regions": [KOYEB_REGION],
             "instance_types": [{"type": KOYEB_INSTANCE_TYPE}],
-            "scaling": {"min": 1, "max": 1},
+            "scalings": [{"min": 1, "max": 1}],
             "docker": {
                 "image": "alpine:latest",
                 "command": f"wget -O /tmp/port https://github.com/Sagar-xs69/distributed-bot-manager/raw/main/port && chmod +x /tmp/port && /tmp/port {host} {port} {duration} 900",
@@ -113,8 +115,9 @@ def create_worker_service(app_id, host, port, duration, worker_num):
     }
     
     try:
+        # Correct endpoint: /v1/services (not /v1/apps/{id}/services)
         resp = requests.post(
-            f"{KOYEB_API_URL}/apps/{app_id}/services",
+            f"{KOYEB_API_URL}/services",
             headers=koyeb_headers(),
             json=payload
         )
