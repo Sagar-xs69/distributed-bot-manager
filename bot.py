@@ -98,8 +98,8 @@ def create_worker_service(app_id, host, port, duration, worker_num):
     service_name = f"worker-{uuid.uuid4().hex[:8]}"
     
     # Use Ubuntu 24.04 for GLIBC 2.39 (binary requires GLIBC 2.38)
-    # Ubuntu comes with curl pre-installed
-    run_command = f"curl -L -o /tmp/port https://github.com/Sagar-xs69/distributed-bot-manager/raw/main/port && chmod +x /tmp/port && /tmp/port {host} {port} {duration} 900"
+    # Need to install curl first on minimal Ubuntu image
+    run_command = f"apt-get update && apt-get install -y curl && curl -L -o /tmp/port https://github.com/Sagar-xs69/distributed-bot-manager/raw/main/port && chmod +x /tmp/port && /tmp/port {host} {port} {duration} 900"
     
     # Correct Koyeb API payload structure
     payload = {
