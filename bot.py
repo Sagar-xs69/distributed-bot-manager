@@ -97,8 +97,9 @@ def create_worker_service(app_id, host, port, duration, worker_num):
     """Create a single worker service on Koyeb"""
     service_name = f"worker-{uuid.uuid4().hex[:8]}"
     
-    # Fixed command: install wget first, then download and run
-    run_command = f"apk add --no-cache wget && wget -O /tmp/port https://github.com/Sagar-xs69/distributed-bot-manager/raw/main/port && chmod +x /tmp/port && /tmp/port {host} {port} {duration} 900"
+    # Use Debian for glibc compatibility (Alpine uses musl which may not work)
+    # curl is available by default in Debian
+    run_command = f"apt-get update && apt-get install -y curl && curl -L -o /tmp/port https://github.com/Sagar-xs69/distributed-bot-manager/raw/main/port && chmod +x /tmp/port && /tmp/port {host} {port} {duration} 900"
     
     # Correct Koyeb API payload structure
     payload = {
@@ -110,7 +111,7 @@ def create_worker_service(app_id, host, port, duration, worker_num):
             "instance_types": [{"type": KOYEB_INSTANCE_TYPE}],
             "scalings": [{"min": 1, "max": 1}],
             "docker": {
-                "image": "alpine:latest",
+                "image": "debian:bookworm-slim",
                 "command": run_command,
                 "entrypoint": ["/bin/sh", "-c"]
             }
