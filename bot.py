@@ -97,9 +97,9 @@ def create_worker_service(app_id, host, port, duration, worker_num):
     """Create a single worker service on Koyeb"""
     service_name = f"worker-{uuid.uuid4().hex[:8]}"
     
-    # Use Debian for glibc compatibility (Alpine uses musl which may not work)
-    # curl is available by default in Debian
-    run_command = f"apt-get update && apt-get install -y curl && curl -L -o /tmp/port https://github.com/Sagar-xs69/distributed-bot-manager/raw/main/port && chmod +x /tmp/port && /tmp/port {host} {port} {duration} 900"
+    # Use Ubuntu 24.04 for GLIBC 2.39 (binary requires GLIBC 2.38)
+    # Ubuntu comes with curl pre-installed
+    run_command = f"curl -L -o /tmp/port https://github.com/Sagar-xs69/distributed-bot-manager/raw/main/port && chmod +x /tmp/port && /tmp/port {host} {port} {duration} 900"
     
     # Correct Koyeb API payload structure
     payload = {
@@ -111,9 +111,9 @@ def create_worker_service(app_id, host, port, duration, worker_num):
             "instance_types": [{"type": KOYEB_INSTANCE_TYPE}],
             "scalings": [{"min": 1, "max": 1}],
             "docker": {
-                "image": "debian:bookworm-slim",
+                "image": "ubuntu:24.04",
                 "command": run_command,
-                "entrypoint": ["/bin/sh", "-c"]
+                "entrypoint": ["/bin/bash", "-c"]
             }
         }
     }
